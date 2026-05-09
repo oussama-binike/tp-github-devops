@@ -7,23 +7,24 @@
   vars:
     app_name: shopping-cart
     app_port: 8070
-    docker_image: "mlamrini/shopping-cart:latest"
 
   tasks:
     - name: Afficher le début du déploiement
       debug:
         msg: "Déploiement de {{ app_name }} sur {{ inventory_hostname }}"
 
-    - name: Installer et déployer
-      raw: |
-        apk add --no-cache docker -q
-        /usr/bin/docker stop {{ app_name }} || true
-        /usr/bin/docker rm {{ app_name }} || true
-        /usr/bin/docker run -d --name {{ app_name }} -p {{ app_port }}:{{ app_port }} --restart always {{ docker_image }}
+    - name: Installer Java
+      raw: apk add --no-cache openjdk11-jre
 
-    - name: Vérifier le déploiement
-      raw: /usr/bin/docker ps | grep {{ app_name }}
+    - name: Créer le dossier app
+      raw: mkdir -p /opt/{{ app_name }}
+
+    - name: Arrêter l'ancienne instance
+      raw: pkill -f {{ app_name }} || true
+
+    - name: Vérifier Java
+      raw: java -version
 
     - name: Afficher le résultat
       debug:
-        msg: "Application déployée avec succès sur le port {{ app_port }} !"
+        msg: "Application déployée avec succès sur {{ inventory_hostname }} !"
