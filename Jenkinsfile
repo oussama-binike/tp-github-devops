@@ -40,8 +40,8 @@ pipeline {
         stage('Ansible Deploy') {
             steps {
                 ansiblePlaybook(
-                    playbook: 'tp-ansible/deploy.yml',
-                    inventory: 'tp-ansible/inventory.ini',
+                    playbook: 'tp_ansible/deploy.yml',
+                    inventory: 'tp_ansible/inventory.ini',
                     credentialsId: 'ansible-ssh',
                     colorized: true
                 )
