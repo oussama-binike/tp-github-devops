@@ -1,33 +1,42 @@
 pipeline {
     agent any
+
     tools {
         maven 'maven'
         ansible 'ansible'
     }
+
     environment {
         DOCKER_IMAGE = "ousssamabinike/shopping-cart-2"
         DOCKER_TAG = "latest"
     }
+
     stages {
+
         stage('COMPILE') {
             steps {
-            sh 'mvn clean compile -DskipTests=true'
+                sh 'mvn clean compile -DskipTests=true'
             }
         }
-        stage("build docker image") {
+
+        stage('Build Docker Image') {
             steps {
                 withCredentials([
-                        usernamePassword(
-                            credentialsId: 'DOCKER_CREDENTIAL',
-                            usernameVariable: 'USER',
-                            passwordVariable: 'PWD'
-                        )
-                    ])
-                    sh "echo ${PWD} | docker login -u ${USER} --password-stdin"
-                    sh "docker build -t  ."
-                    sh "docker push \$USER/backend-ms1:${IMAGE_NAME}"
+                    usernamePassword(
+                        credentialsId: 'DOCKER_CREDENTIAL',
+                        usernameVariable: 'DOCKER_USER',
+                        passwordVariable: 'DOCKER_PASS'
+                    )
+                ]) {
+                    sh '''
+                        echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
+                        docker build -t $DOCKER_IMAGE:$DOCKER_TAG .
+                        docker push $DOCKER_IMAGE:$DOCKER_TAG
+                    '''
+                }
             }
         }
+
         stage('Ansible Deploy') {
             steps {
                 ansiblePlaybook(
@@ -38,17 +47,19 @@ pipeline {
                 )
             }
         }
-        post {
-            success {
-                echo 'Pipeline Jenkins + Ansible terminé avec succès !'
-            }
-            failure {
-                echo 'Pipeline échoué !'
-            }
-            always {
-                echo 'Pipeline terminé !'
-            }
-        }
-    }   
-}
+    }
 
+    post {
+        success {
+            echo 'Pipeline Jenkins + Ansible terminé avec succès !'
+        }
+
+        failure {
+            echo 'Pipeline échoué !'
+        }
+
+        always {
+            echo 'Pipeline terminé !'
+        }
+    }
+}
